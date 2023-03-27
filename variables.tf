@@ -18,11 +18,6 @@ variable "environment" {
   type        = string
 }
 
-variable "region" {
-  description = "Company region for which the resources are created (e.g. global, us, eu, asia)."
-  type        = string
-}
-
 variable "gcp_project" {
   description = "GCP Project ID override - this is normally not needed and should only be used in specific cases."
   type        = string
