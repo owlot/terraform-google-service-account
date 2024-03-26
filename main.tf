@@ -11,12 +11,10 @@ locals {
       {
         account_id   = replace(sa, "/[^\\p{Ll}\\p{Lo}\\p{N}-]+/", "-")
         display_name = title(format("Terraform Managed SA: %s %s %s %s", local.owner, local.environment, local.project, sa))
-        roles = { for role, role_settings in try(settings.roles, {}) : (length(regexall("^roles/", role)) > 0 ? role : format("roles/%s", role)) =>
-          merge(role_settings,
-            {
-              members = [for member, type in role_settings.members : format("%s:%s", type, member)]
-            }
-          )
+        roles = { for role, role_settings in settings.roles : role => merge(role_settings,
+          {
+            members = [for name, member in role_settings.members : format("%s:%s", member.type, member.email)]
+          })
         }
       }
     )
@@ -33,13 +31,13 @@ resource "google_service_account" "map" {
 }
 
 data "google_iam_policy" "map" {
-  for_each = { for service_account, settings in local.service_accounts : service_account => settings if settings.roles != null }
+  for_each = { for sa, settings in local.service_accounts : sa => settings if settings.roles != null }
 
   dynamic "binding" {
     for_each = each.value.roles
 
     content {
-      role    = binding.key
+      role    = (length(regexall("^roles/", binding.key)) > 0 ? binding.key : format("roles/%s", binding.key))
       members = binding.value.members
       dynamic "condition" {
         for_each = binding.value.condition != null ? [binding.value.condition] : []
