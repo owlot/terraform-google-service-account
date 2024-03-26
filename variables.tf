@@ -36,12 +36,15 @@ variable "service_accounts" {
   type = map(object({
     description = optional(string, null)
     roles = optional(map(object({
-      members = map(string)
+      members = map(object({
+        email = string
+        type  = string
+      }))
       condition = optional(object({
         expression  = string
         title       = string
         description = optional(string, null)
       }))
-    })))
+    })), {})
   }))
 }
